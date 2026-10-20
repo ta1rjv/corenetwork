@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 324 40" width="648" height="80" role="img" aria-label="CORENETWORK">
+<g class="lg-core" fill="none" stroke="#ffffff" stroke-width="5.2" stroke-linejoin="miter"><path d="M23.87 14.3A11.4 11.4 0 1 0 23.87 25.7"/><circle cx="48" cy="20" r="11.4"/><path d="M70.6 34V8.6H84A6.2 6.2 0 0 1 84 21H70.6M81 21L90.4 34"/><path d="M122 8.6H100.6V31.4H122M100.6 20H119"/></g>
+<rect x="45.5" y="17.5" width="5" height="5" fill="#19e0ff"/>
+<g class="lg-net" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="bevel"><path d="M135.6 34V6L154.4 34V6"/><path d="M179 7.6H162.6V32.4H179M162.6 20H177"/><path d="M184 7.6H204M194 7.6V34"/><path d="M209.8 6L217 34L224 10L231 34L238.2 6"/><circle cx="258" cy="20" r="12.4"/><path d="M278.6 34V7.6H289A5.6 5.6 0 0 1 289 18.8H278.6M287 18.8L296.4 34"/><path d="M303.6 34V6M322.4 6L303.6 21M310 16.6L323 34"/></g>
+</svg>
