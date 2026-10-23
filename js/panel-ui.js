@@ -360,14 +360,17 @@ export function createApp({ role, routes, defaultRoute, shell }) {
     let text = '';
     if (el.id) { const l = main.querySelector(`label[for="${el.id}"]`); if (l) text = l.textContent; }
     if (!text) text = el.getAttribute('aria-label') || el.textContent || el.getAttribute('name') || '';
-    return { tag: el.tagName, text: text.trim() };
+    const row = el.closest('[data-key], tr, li');
+    let rowKey = '';
+    if (row && main.contains(row)) rowKey = row.getAttribute('data-key') || String(Array.prototype.indexOf.call(row.parentNode.children, row));
+    return { tag: el.tagName, text: text.trim(), row: rowKey };
   };
   const focusByKey = (key) => {
     if (!key) return;
     const cands = main.querySelectorAll('button, a[href], input, select, textarea');
     for (const el of cands) {
       const k = focusKey(el);
-      if (k && k.tag === key.tag && k.text === key.text) { el.focus({ preventScroll: true }); return; }
+      if (k && k.tag === key.tag && k.text === key.text && k.row === key.row) { el.focus({ preventScroll: true }); return; }
     }
   };
 
@@ -407,7 +410,7 @@ export function createApp({ role, routes, defaultRoute, shell }) {
     if (my !== token) { if (typeof result === 'function') result(); return; }
     cleanup = typeof result === 'function' ? result : null;
     main.replaceChildren(frag);
-    document.body.classList.remove('side-open');
+    setDrawer(false);
     if (focus) {
       const h1 = main.querySelector('h1');
       if (h1) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
@@ -445,16 +448,24 @@ export function createApp({ role, routes, defaultRoute, shell }) {
     await resetDemoData();
     toast('Demo verileri sıfırlandı.');
   }));
-  toggle.addEventListener('click', () => {
-    const open = document.body.classList.toggle('side-open');
+  const appMain = document.querySelector('.app-main');
+  const setDrawer = (open) => {
+    document.body.classList.toggle('side-open', open);
     toggle.setAttribute('aria-expanded', String(open));
+    if (appMain) appMain.inert = open;
+    if (open) {
+      const first = document.querySelector('#side a[href], #side button');
+      if (first) first.focus({ preventScroll: true });
+    }
+  };
+  toggle.addEventListener('click', () => {
+    setDrawer(!document.body.classList.contains('side-open'));
   });
   const scrim = document.getElementById('side-scrim');
-  scrim.addEventListener('click', () => { document.body.classList.remove('side-open'); toggle.setAttribute('aria-expanded', 'false'); });
+  scrim.addEventListener('click', () => setDrawer(false));
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.body.classList.contains('side-open')) {
-      document.body.classList.remove('side-open');
-      toggle.setAttribute('aria-expanded', 'false');
+      setDrawer(false);
       toggle.focus();
     }
   });
