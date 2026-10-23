@@ -9,7 +9,7 @@
   --hair-strong: rgba(120, 190, 230, 0.26);
   --side-w: 240px;
   min-height: 100vh; background: var(--bg); color: var(--ink);
-  font-size: 0.9375rem; line-height: 1.5; font-variant-numeric: tabular-nums;
+  font-size: 0.9375rem; line-height: 1.5;
 }
 .panel-body :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 6px; }
 .panel-body .view-title:focus, .panel-body #main:focus, .panel-body h1:focus { outline: none; }
@@ -283,3 +283,6 @@ a.list-item:hover > :first-child { color: var(--cyan); }
 .rack-card .meter-row { grid-template-columns: 60px minmax(0, 1fr) 40px; }
 .tbl .meter-row { grid-template-columns: minmax(80px, 1fr) 44px; margin: 0; }
 .tbl .meter-label { display: none; }
+
+/* tabular figures only for numeric value cells, not for names with hyphens */
+.kpi-val, .big-val, .meter-val, .kv dd, .ptable .num, time { font-variant-numeric: tabular-nums; }
