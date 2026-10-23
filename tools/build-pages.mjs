@@ -880,7 +880,7 @@ ${hero('İletişim', 'Bizimle iletişime geçin.', 'Talebinizi iletin. İhtiyac�
         <li><a href="https://x.com/ornekfirma" target="_blank" rel="noopener noreferrer">X</a></li>
         <li><a href="https://www.instagram.com/ornekfirma" target="_blank" rel="noopener noreferrer">Instagram</a></li>
       </ul>
-      <a class="btn btn-ghost btn-sm" href="#" data-cfg-href="panelUrl">Müşteri Paneli</a>
+      <a class="btn btn-ghost btn-sm" href="giris.html" data-cfg-href="panelUrl">Müşteri Paneli</a>
     </aside>
 
     <div id="teklif" class="quote reveal">
