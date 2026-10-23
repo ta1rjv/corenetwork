@@ -41,7 +41,7 @@ async function overview(_a, { main }) {
       kpi('Bekleyen sipariş', String(orders.filter((o) => o.status === 'pending').length), null, '#/hizmetler')),
     h('div', { class: 'grid-cards' },
       card('Duyurular', anns.length ? h('div', { class: 'list' }, anns.slice(0, 3).map((a) =>
-        h('div', { class: 'list-item' }, h('div', null, h('p', null, h('strong', null, a.title)), h('p', { class: 'sub' }, a.text)), h('span', { class: 'sub mono' }, fmtDate(a.createdAt))))) : emptyState('Duyuru yok.')),
+        h('div', { class: 'list-item' }, h('div', null, h('p', null, h('strong', null, a.title)), h('p', { class: 'sub' }, a.text)), h('span', { class: 'sub' }, fmtDate(a.createdAt))))) : emptyState('Duyuru yok.')),
       card('Açık destek talepleri', openTickets.length ? h('div', { class: 'list' }, openTickets.map((t) =>
         h('a', { class: 'list-item', href: `#/destek/${t.id}` }, h('span', null, t.subject), badge(t.status, LABELS.ticket[t.status])))) : emptyState('Açık talep yok.')),
       card('Ödenmemiş faturalar', unpaid.length ? h('div', { class: 'list' }, unpaid.map((i) =>
@@ -127,7 +127,7 @@ async function services(args, { main, render }) {
   main.append(pageHead('Hizmetlerim', sampleTag()), suspendedNotice(customer),
     h('div', { class: 'list' }, list.map((s) =>
       h('a', { class: 'list-item', href: `#/hizmetler/${s.id}` },
-        h('div', { class: 'row' }, h('span', { class: 'svc-ico mono', 'aria-hidden': 'true' }, LABELS.serviceType[s.type].slice(0, 2).toUpperCase()), h('div', null, h('p', null, h('strong', null, s.name)), h('p', { class: 'sub' }, `${LABELS.serviceType[s.type]} - ${money(s.mrr)}/ay`))),
+        h('div', { class: 'row' }, h('span', { class: 'svc-ico', 'aria-hidden': 'true' }, ({ colo: 'CO', vds: 'VDS', internet: 'NET' })[s.type]), h('div', null, h('p', null, h('strong', null, s.name)), h('p', { class: 'sub' }, `${LABELS.serviceType[s.type]} - ${money(s.mrr)}/ay`))),
         badge(s.status, LABELS.service[s.status])))),
     card('Siparişlerim', orders.length ? h('div', { class: 'list' }, orders.map((o) =>
       h('div', { class: 'list-item' }, h('div', null, h('p', null, o.title), h('p', { class: 'sub' }, fmtDate(o.createdAt))), badge(o.status, LABELS.order[o.status])))) : emptyState('Sipariş yok.')),

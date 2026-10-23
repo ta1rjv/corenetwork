@@ -67,7 +67,7 @@ export function badge(value, label) {
 }
 
 export function sampleTag(text = 'Örnek veri') {
-  return h('span', { class: 'sample-tag mono' }, text);
+  return h('span', { class: 'sample-tag' }, text);
 }
 
 export function emptyState(text) { return h('p', { class: 'empty' }, text); }
@@ -80,7 +80,7 @@ export function meter(pct, label) {
   const p = Math.max(0, Math.min(100, pct));
   const bar = h('span', { class: `meter${p >= 80 ? ' hot' : ''}`, role: 'img', 'aria-label': `${label}: yüzde ${Math.round(p)}` }, h('i'));
   bar.firstChild.style.width = `${p}%`;
-  return h('div', { class: 'meter-row' }, h('span', { class: 'meter-label' }, label), bar, h('span', { class: 'mono meter-val' }, `%${Math.round(p)}`));
+  return h('div', { class: 'meter-row' }, h('span', { class: 'meter-label' }, label), bar, h('span', { class: 'meter-val' }, `%${Math.round(p)}`));
 }
 
 export function dl(pairs) {

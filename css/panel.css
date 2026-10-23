@@ -1,16 +1,17 @@
 /* CORENETWORK demo panels (giris.html, musteri-paneli.html, yonetim-paneli.html).
    Reuses the design tokens from style.css. Demo only: no real data or backend. */
 
-.panel-body { min-height: 100vh; background: var(--bg); }
+.panel-body { min-height: 100vh; background: var(--bg); font-variant-numeric: tabular-nums; }
+.view-title:focus, #main:focus { outline: none; }
 .demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; padding: 8px var(--pad); background: rgba(255, 179, 64, 0.1); border-bottom: 1px solid rgba(255, 179, 64, 0.35); color: var(--amber); font-size: 0.82rem; text-align: center; }
 .demo-badge { padding: 2px 10px; border-radius: 999px; border: 1px solid var(--amber); font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; font-weight: 600; }
-.sample-tag { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px dashed var(--line-strong); color: var(--muted); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.sample-tag { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px dashed var(--line-strong); color: var(--muted); font-size: 0.74rem; white-space: nowrap; }
 
 /* ---------- Shell ---------- */
-.app { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: calc(100vh - 38px); }
+.app { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: calc(100vh - 38px); background: linear-gradient(to right, var(--bg-2) 251px, var(--line) 251px 252px, transparent 252px); }
 .side { position: sticky; top: 0; align-self: start; height: 100vh; display: flex; flex-direction: column; gap: 18px; padding: 20px 14px; border-right: 1px solid var(--line); background: var(--bg-2); overflow-y: auto; }
 .side .brand img { height: 22px; width: auto; display: block; }
-.side-role { margin: 0; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); }
+.side-role { margin: 0; font-size: 0.86rem; font-weight: 600; color: var(--cyan); }
 .side-nav ul { display: grid; gap: 4px; }
 .side-nav a { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 10px; color: var(--soft); font-size: 0.94rem; font-weight: 500; text-decoration: none; border: 1px solid transparent; }
 .side-nav a:hover { background: rgba(255, 255, 255, 0.04); color: var(--ink); text-decoration: none; }
@@ -25,7 +26,7 @@
 #main { padding: clamp(18px, 3vw, 36px) var(--pad) 64px; min-width: 0; }
 
 @media (max-width: 899px) {
-  .app { grid-template-columns: minmax(0, 1fr); }
+  .app { grid-template-columns: minmax(0, 1fr); background: none; }
   .menu-btn { display: inline-grid; place-items: center; }
   .side { position: fixed; z-index: 50; left: 0; top: 0; bottom: 0; width: min(280px, 86vw); height: 100vh; transform: translateX(-102%); visibility: hidden; transition: transform 0.3s var(--ease), visibility 0s linear 0.3s; }
   .side-open .side { transform: none; visibility: visible; transition-delay: 0s; }
@@ -52,7 +53,7 @@
 .empty { margin: 0; padding: 18px; color: var(--muted); text-align: center; border: 1px dashed var(--line-strong); border-radius: 12px; }
 .chart { display: block; width: 100%; height: auto; }
 .chart .grid { stroke: var(--line); stroke-width: 1; }
-.chart .axis { fill: var(--muted); font: 9px var(--font-mono); }
+.chart .axis { fill: var(--muted); font: 9px var(--font-body); font-variant-numeric: tabular-nums; }
 .chart-note { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; color: var(--muted); font-size: 0.78rem; }
 
 .pbadge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 600; border: 1px solid; white-space: nowrap; }
@@ -75,7 +76,7 @@
 
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
 .ptable { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.ptable th { text-align: left; padding: 10px 12px; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cyan); border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+.ptable th { text-align: left; padding: 10px 12px; font-size: 0.82rem; font-weight: 600; color: var(--cyan); border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
 .ptable td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 .ptable tr:last-child td { border-bottom: 0; }
 .ptable td .btn { white-space: nowrap; }
@@ -97,7 +98,7 @@
 .list-item .sub { color: var(--muted); font-size: 0.84rem; }
 a.list-item { color: var(--ink); text-decoration: none; }
 a.list-item:hover { border-color: var(--cyan); text-decoration: none; }
-.svc-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--cyan); background: rgba(25, 224, 255, 0.08); border: 1px solid rgba(25, 224, 255, 0.22); }
+.svc-ico { font-size: 0.72rem; font-weight: 600; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--cyan); background: rgba(25, 224, 255, 0.08); border: 1px solid rgba(25, 224, 255, 0.22); }
 
 .panel-form { display: grid; gap: 14px; max-width: 640px; }
 .panel-form .field { display: grid; gap: 6px; }
@@ -137,3 +138,5 @@ input[type='date'] { color-scheme: dark; }
 .login-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 20px; }
 .cred { margin: 0; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--line-strong); font-size: 0.84rem; color: var(--soft); overflow-wrap: anywhere; }
 .login-note { color: var(--muted); font-size: 0.9rem; }
+
+.login-wrap .eyebrow { font-family: var(--font-body); font-size: 0.86rem; letter-spacing: 0; text-transform: none; font-weight: 600; }

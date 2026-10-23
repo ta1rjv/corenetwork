@@ -18,7 +18,7 @@ async function dashboard(_a, { main }) {
   };
   const kpiWith = (label, node, sub) => h('div', { class: 'kpi' }, h('p', { class: 'kpi-label' }, label), node, sub ? h('p', { class: 'kpi-sub' }, sub) : null);
   const upBox = h('div'), pwBox = h('div'), revBox = h('div'), tixBox = h('div');
-  const live = h('span', { class: 'sample-tag mono' }, 'Canlı (simülasyon)');
+  const live = h('span', { class: 'sample-tag' }, 'Canlı (simülasyon)');
   const paint = (d) => {
     vals.cust.textContent = String(d.customers);
     vals.mrr.textContent = money(d.mrr);
@@ -179,14 +179,14 @@ async function tickets(args, { main }) {
 // ---------------------------------------------------------- infrastructure ----
 async function infra(_a, { main }) {
   const [racks, links, alarms] = await Promise.all([store.listRacks(), store.listLinks(), store.listAlarms()]);
-  const rackNodes = racks.map((r) => ({ r, kw: h('span', { class: 'mono' }), t: h('span', { class: 'mono' }) }));
+  const rackNodes = racks.map((r) => ({ r, kw: h('span'), t: h('span') }));
   const jitter = () => rackNodes.forEach((n) => {
     n.kw.textContent = `${num(Math.max(0, n.r.powerKw + (Math.random() - 0.5) * 0.3), 1)} kW`;
     n.t.textContent = `${num(n.r.tempC + (Math.random() - 0.5) * 0.6, 1)} °C`;
   });
   jitter();
   const open = alarms.filter((a) => !a.acked);
-  main.append(pageHead('Altyapı izleme', sampleTag(), h('span', { class: 'sample-tag mono' }, 'Canlı (simülasyon)')),
+  main.append(pageHead('Altyapı izleme', sampleTag(), h('span', { class: 'sample-tag' }, 'Canlı (simülasyon)')),
     h('div', { class: 'rack-grid' }, rackNodes.map(({ r, kw, t }) => card(`Raf ${r.id}`,
       meter((r.usedU / r.totalU) * 100, 'Doluluk'), dl([['Kullanılan', `${r.usedU}/${r.totalU}U`], ['Güç', kw], ['Sıcaklık', t]])))),
     card('Ağ bağlantıları', table(['Hat', 'Kapasite', 'Kullanım', 'Durum'], links.map((l) => [l.name, `${l.capacityGbps} Gbps`, meter(l.usagePct, 'Kullanım'), badge(l.status, LABELS.link[l.status])]), 'Ağ bağlantıları')),
@@ -211,7 +211,7 @@ async function announcements(_a, { main }) {
       toast('Duyuru yayınlandı; müşteri panelinde görünür.');
     } }, field('Başlık', title), field('Metin', text), err, h('div', null, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Yayınla')))),
     card('Yayındaki duyurular', list.length ? h('div', { class: 'list' }, list.map((a) => h('div', { class: 'list-item' },
-      h('div', null, h('p', null, h('strong', null, a.title)), h('p', { class: 'sub' }, a.text), h('p', { class: 'sub mono' }, fmtDate(a.createdAt))),
+      h('div', null, h('p', null, h('strong', null, a.title)), h('p', { class: 'sub' }, a.text), h('p', { class: 'sub' }, fmtDate(a.createdAt))),
       h('button', { class: 'btn btn-danger btn-sm', type: 'button', onclick: () => store.deleteAnnouncement(a.id) }, 'Sil')))) : emptyState('Duyuru yok.')));
 }
 
