@@ -9,4 +9,7 @@ Phase: MAINTENANCE (demo panels merged into main and deployed 2026-10-23)
 - Panel review: first review REJECTED (1 MAJOR skip-link/router, fixed with all MINORs); re-review APPROVED (2 MINOR polish items fixed afterwards).
 - Earlier review of the original site: first review REJECTED (1 MAJOR, fixed); re-review NOT RUN.
 - Deployment: DEPLOYED. GitHub Pages build of main 025a282 succeeded; site, giris.html, musteri-paneli.html, yonetim-paneli.html return HTTP 200 at https://ta1rjv.github.io/corenetwork/.
-- Next step: replace the demo store and auth with a server-side backend (planned WHMCS integration, Proxmox VE provisioning for automatic VDS orders, D6).
+- Next step: the real backend (WHMCS integration, Proxmox VE provisioning) is planned in the private repository
+  ta1rjv/corenetwork-integration (see its docs/STATUS.md); the panel UI moves there at implementation start.
+  Until go-live this repository keeps the demo panels unchanged.
+- Last Git State: main in sync with origin, last commit before close e21f55f; branch wip/panels merged (kept on remote).
