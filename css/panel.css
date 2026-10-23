@@ -27,7 +27,7 @@
 @media (max-width: 899px) {
   .app { grid-template-columns: minmax(0, 1fr); }
   .menu-btn { display: inline-grid; place-items: center; }
-  .side { position: fixed; z-index: 50; left: 0; top: 0; bottom: 0; width: min(280px, 86vw); height: auto; transform: translateX(-102%); visibility: hidden; transition: transform 0.3s var(--ease), visibility 0s linear 0.3s; }
+  .side { position: fixed; z-index: 50; left: 0; top: 0; bottom: 0; width: min(280px, 86vw); height: 100vh; transform: translateX(-102%); visibility: hidden; transition: transform 0.3s var(--ease), visibility 0s linear 0.3s; }
   .side-open .side { transform: none; visibility: visible; transition-delay: 0s; }
   .side-open .side-scrim { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.6); }
   .topbar-user .who { display: none; }
