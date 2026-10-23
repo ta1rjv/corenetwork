@@ -9,7 +9,8 @@ async function enter(form, quick) {
     ? await startSession(role)
     : await login(role, form.elements.email.value, form.elements.password.value);
   if (!ok) {
-    err.textContent = quick ? 'Tarayıcı oturum depolaması kullanılamıyor; demo paneli açılamadı.' : 'E-posta veya şifre hatalı (demo bilgilerini kullanın).';
+    const creds = !quick && DEMO_ACCOUNTS[role].email === form.elements.email.value.trim().toLowerCase() && form.elements.password.value === DEMO_ACCOUNTS[role].password;
+    err.textContent = quick || creds ? 'Tarayıcı oturum depolaması kullanılamıyor; demo paneli açılamadı.' : 'E-posta veya şifre hatalı (demo bilgilerini kullanın).';
     return;
   }
   window.location.href = DEMO_ACCOUNTS[role].home;

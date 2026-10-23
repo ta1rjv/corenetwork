@@ -12,14 +12,8 @@ export const DEMO_ACCOUNTS = {
   admin: { email: 'yonetici@demo.local', password: 'demo', label: 'Yönetici', home: 'yonetim-paneli.html' },
 };
 
-let memorySession = null;
-
 function readFlag() {
-  try {
-    const v = window.sessionStorage.getItem(SESSION_KEY);
-    if (v) return v;
-  } catch (e) { /* storage blocked: fall back to memory */ }
-  return memorySession;
+  try { return window.sessionStorage.getItem(SESSION_KEY); } catch (e) { return null; }
 }
 
 /** Returns 'customer', 'admin' or null. */
@@ -35,16 +29,20 @@ export async function login(role, email, password) {
   return startSession(role);
 }
 
-/** Sets the session flag. Resolves to the role, or null if it could not be kept. */
+/**
+ * Sets the session flag in sessionStorage and reads it back. Resolves to the role, or null
+ * when the browser blocks sessionStorage (there is no in-memory fallback: it would not
+ * survive the page navigation to the panel).
+ */
 export async function startSession(role) {
   if (!DEMO_ACCOUNTS[role]) return null;
-  memorySession = role;
-  try { window.sessionStorage.setItem(SESSION_KEY, role); } catch (e) { /* memory only */ }
-  return currentRole() === role ? role : null;
+  try {
+    window.sessionStorage.setItem(SESSION_KEY, role);
+    return window.sessionStorage.getItem(SESSION_KEY) === role ? role : null;
+  } catch (e) { return null; }
 }
 
 export async function logout() {
-  memorySession = null;
   try { window.sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
 }
 
