@@ -27,6 +27,13 @@
 //   alarm        { id, severity: 'critical'|'warning'|'info', source, text, at, acked }
 //   usage        { bandwidth24: [24 Mbps], power24: [24 kW], customerId }
 //
+// External reference fields (all null in the demo). They are reserved for the planned
+// billing/client/ticket platform (WHMCS) and virtualization platform (Proxmox VE) integration:
+//   customer.whmcsClientId, service.whmcsServiceId, order.whmcsOrderId,
+//   invoice.whmcsInvoiceId, ticket.whmcsTicketId, announcement.whmcsAnnouncementId
+//   vds service: provisioning { provider: 'proxmox', node: null, vmid: null, status: 'demo' }
+// Nothing is integrated yet; these fields only mark where the mapping will live.
+//
 // Timestamps are ISO 8601 strings. Money is a number in TRY.
 // ============================================================================
 
@@ -175,6 +182,16 @@ export function createSeed(now = Date.now()) {
     bandwidth24: series(24, 210, 120, 60, -1),
     power24: series(24, 3.2, 0.25, 0.12, 0.6),
   };
+
+  customers.forEach((x) => { x.whmcsClientId = null; });
+  services.forEach((x) => {
+    x.whmcsServiceId = null;
+    if (x.vds) x.provisioning = { provider: 'proxmox', node: null, vmid: null, status: 'demo' };
+  });
+  orders.forEach((x) => { x.whmcsOrderId = null; });
+  invoices.forEach((x) => { x.whmcsInvoiceId = null; });
+  tickets.forEach((x) => { x.whmcsTicketId = null; });
+  announcements.forEach((x) => { x.whmcsAnnouncementId = null; });
 
   return {
     version: 1,

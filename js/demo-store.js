@@ -6,6 +6,23 @@
 // plain JSON copies, so a later server-side version can replace this module
 // with HTTP calls that keep the same function names and entity shapes
 // (documented in js/demo-data.js). Panel modules must not touch localStorage.
+//
+// Intended future backend operation per store function (PLANNED, nothing is integrated):
+//   list/getCustomer(s), updateProfile, add/removeContact  -> client records (billing platform)
+//   listServices, getService                               -> client services list
+//   listInvoices, getInvoice, createInvoice, payInvoice    -> billing system invoices / payment
+//   listTickets, getTicket, createTicket, replyTicket,
+//     setTicketStatus                                      -> support ticket system
+//   listOrders, createOrder, rejectOrder                   -> order records
+//   approveOrder                                           -> accept order + trigger VDS
+//                                                             provisioning on the virtualization platform
+//   setPowerState                                          -> VM start / stop / reboot
+//   setCustomerStatus                                      -> suspend / unsuspend client services
+//   list/createAnnouncement, deleteAnnouncement            -> announcements
+//   listRacks, listLinks, listAlarms, getMetrics, getUsage -> monitoring data source
+//   resetDemoData                                          -> demo only, no backend equivalent
+// Security: the browser must never hold billing-platform API credentials or virtualization
+// platform tokens. The future server calls those APIs and the panels call only the server.
 // ============================================================================
 import { createSeed, DEMO_CUSTOMER_ID } from './demo-data.js';
 
@@ -156,7 +173,7 @@ export async function getMetrics() {
 // --------------------------------------------------------------- writes ----
 export async function createTicket({ customerId, subject, dept, priority, message }) {
   return mutate((s) => {
-    const t = { id: nextId('tkt'), customerId, subject, dept, priority, status: 'open', createdAt: now(), updatedAt: now(),
+    const t = { id: nextId('tkt'), customerId, subject, dept, priority, status: 'open', createdAt: now(), updatedAt: now(), whmcsTicketId: null,
       messages: [{ id: nextId('msg'), from: 'customer', text: message, at: now() }] };
     s.tickets.push(t);
     return t;
@@ -185,7 +202,7 @@ export async function createInvoice({ customerId, desc, amount, dueAt }) {
   return mutate((s) => {
     const seq = 230 + (s.seq.inv = (s.seq.inv || 0) + 1);
     const i = { id: `inv-${s.seq.inv}`, customerId, no: `DEMO-2026-${String(seq).padStart(4, '0')}`, issuedAt: now(), dueAt,
-      status: 'unpaid', paidAt: null, items: [{ desc, amount }], total: amount };
+      status: 'unpaid', paidAt: null, whmcsInvoiceId: null, items: [{ desc, amount }], total: amount };
     s.invoices.push(i);
     return i;
   });
@@ -208,7 +225,7 @@ const PLANS = {
 
 export async function createOrder({ customerId, type, title, plan, mrr, note }) {
   return mutate((s) => {
-    const o = { id: nextId('ord'), customerId, type, title, plan: plan || '', mrr, note: note || '', status: 'pending', createdAt: now() };
+    const o = { id: nextId('ord'), customerId, type, title, plan: plan || '', mrr, note: note || '', status: 'pending', whmcsOrderId: null, createdAt: now() };
     s.orders.push(o);
     return o;
   });
@@ -219,11 +236,12 @@ export async function approveOrder(id) {
     const o = find(s.orders, id);
     if (o.status !== 'pending') return o;
     o.status = 'approved';
-    const svc = { id: nextId('svc'), customerId: o.customerId, type: o.type, name: o.title, status: 'active', mrr: o.mrr, since: now() };
+    const svc = { id: nextId('svc'), customerId: o.customerId, type: o.type, name: o.title, status: 'active', mrr: o.mrr, since: now(), whmcsServiceId: null };
     const pf = PLANS[o.plan] || {};
     if (o.type === 'vds') {
       const host = 1 + ((100 + s.seq.svc - 1) % 254); // stays inside the .1-.254 range of the /24
       svc.vds = { power: 'running', ip: `203.0.113.${host}`, os: 'Ubuntu 22.04 LTS', vcpu: pf.vcpu || 2, ramGb: pf.ramGb || 4, diskGb: pf.diskGb || 80, usage: { cpu: 5, ram: 12, disk: 10 } };
+      svc.provisioning = { provider: 'proxmox', node: null, vmid: null, status: 'demo' };
     }
     if (o.type === 'colo') svc.colo = { rackId: 'R-07', units: pf.units || 10, powerKw: pf.powerKw || 1.5 };
     if (o.type === 'internet') svc.internet = { lineState: 'up', downMbps: pf.downMbps || 100, upMbps: pf.upMbps || 100, ip: '198.51.100.120/30', uptimePct: 100, dailyGb: Array(30).fill(0) };
@@ -263,7 +281,7 @@ export async function removeContact(customerId, contactId) {
 }
 
 export async function createAnnouncement({ title, text }) {
-  return mutate((s) => { const a = { id: nextId('ann'), title, text, createdAt: now() }; s.announcements.push(a); return a; });
+  return mutate((s) => { const a = { id: nextId('ann'), title, text, createdAt: now(), whmcsAnnouncementId: null }; s.announcements.push(a); return a; });
 }
 
 export async function deleteAnnouncement(id) {
