@@ -119,8 +119,9 @@ async function services(args, { main, render }) {
   const form = h('form', { class: 'panel-form', onsubmit: async (e) => {
     e.preventDefault();
     const titles = { vds: 'VDS Orta (yeni)', colo: 'Co-location - Çeyrek Raf (yeni)', internet: 'Fiber İnternet (yeni hat)' };
+    const plans = { vds: 'vds-medium', colo: 'colo-quarter', internet: 'fiber-500' };
     const mrr = { vds: 1450, colo: 11200, internet: 3200 };
-    await store.createOrder({ customerId: CID, type: typeSel.value, title: titles[typeSel.value], mrr: mrr[typeSel.value], note: note.value.trim() });
+    await store.createOrder({ customerId: CID, type: typeSel.value, title: titles[typeSel.value], plan: plans[typeSel.value], mrr: mrr[typeSel.value], note: note.value.trim() });
     toast('Sipariş talebiniz iletildi (demo).');
   } }, field('Hizmet türü', typeSel), field('Not (isteğe bağlı)', note), h('div', null, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Talep gönder')));
   main.append(pageHead('Hizmetlerim', sampleTag()), suspendedNotice(customer),
@@ -186,14 +187,16 @@ async function support(args, { main }) {
       h('p', { class: 'sub' }, `${t.dept} - Öncelik: ${LABELS.priority[t.priority]} - ${fmtDateTime(t.createdAt)}`),
       h('div', { class: 'thread' }, t.messages.map((m) => h('div', { class: `msg from-${m.from}` },
         h('span', { class: 'msg-meta' }, `${m.from === 'admin' ? 'CORENETWORK destek' : 'Siz'} - ${fmtDateTime(m.at)}`), m.text))),
-      h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
+      t.status === 'closed'
+        ? h('div', { class: 'stack' }, h('p', { class: 'notice info' }, 'Bu talep kapatıldı. Yanıt yazmak için talebi yeniden açın.'), h('div', null, h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.setTicketStatus(t.id, 'open') }, 'Talebi yeniden aç')))
+        : h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
         e.preventDefault();
         if (!text.value.trim()) { err.textContent = 'Mesaj boş olamaz.'; return; }
         await store.replyTicket(t.id, 'customer', text.value.trim());
         toast('Yanıtınız gönderildi.');
       } }, field('Yanıtınız', text), err,
       h('div', { class: 'row' }, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Yanıtla'),
-        t.status !== 'closed' ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.setTicketStatus(t.id, 'closed') }, 'Talebi kapat') : null)));
+        t.status !== 'closed' ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => { if (window.confirm('Bu destek talebini kapatmak istiyor musunuz?')) store.setTicketStatus(t.id, 'closed'); } }, 'Talebi kapat') : null)));
     return;
   }
   const list = await store.listTickets({ customerId: CID });
@@ -241,7 +244,7 @@ async function account(_a, { main }) {
     card('İletişim kişileri',
       c.contacts.length ? h('div', { class: 'list' }, c.contacts.map((k) => h('div', { class: 'list-item' },
         h('div', null, h('p', null, h('strong', null, k.name), ` (${k.role})`), h('p', { class: 'sub' }, `${k.email} ${k.phone}`)),
-        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.removeContact(CID, k.id) }, 'Sil')))) : emptyState('Kişi yok.'),
+        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => { if (window.confirm(`${k.name} kişisini silmek istiyor musunuz?`)) store.removeContact(CID, k.id); } }, 'Sil')))) : emptyState('Kişi yok.'),
       h('form', { class: 'panel-form mt', novalidate: true, onsubmit: async (e) => {
         e.preventDefault();
         if (!cn.value.trim()) { cerr.textContent = 'Ad soyad zorunludur.'; return; }
