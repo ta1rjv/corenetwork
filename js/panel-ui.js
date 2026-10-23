@@ -183,9 +183,36 @@ export function createApp({ role, routes, defaultRoute }) {
   let token = 0;
   let pendingRemote = false;
 
+  const safeDecode = (s) => { try { return decodeURIComponent(s); } catch (e) { return s; } };
+  let current = { name: defaultRoute, args: [] };
+  // Only "#/route/arg" hashes are routes. Other hashes (for example the skip link "#main")
+  // keep the current view.
+  const isRouteHash = (hash) => hash === '' || hash === '#' || hash.startsWith('#/');
   const parse = () => {
-    const parts = (window.location.hash.replace(/^#\/?/, '') || defaultRoute).split('/').filter(Boolean).map(decodeURIComponent);
-    return { name: routes[parts[0]] ? parts[0] : defaultRoute, args: parts.slice(1) };
+    const hash = window.location.hash;
+    if (!isRouteHash(hash)) return current;
+    const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(safeDecode);
+    const name = parts.length && Object.hasOwn(routes, parts[0]) ? parts[0] : defaultRoute;
+    current = { name, args: name === parts[0] ? parts.slice(1) : [] };
+    return current;
+  };
+
+  // Focus restore: remember which control had focus (by tag + label/text) and refocus its
+  // counterpart after a re-render.
+  const focusKey = (el) => {
+    if (!el || !main.contains(el) || el === main) return null;
+    let text = '';
+    if (el.id) { const l = main.querySelector(`label[for="${el.id}"]`); if (l) text = l.textContent; }
+    if (!text) text = el.getAttribute('aria-label') || el.textContent || el.getAttribute('name') || '';
+    return { tag: el.tagName, text: text.trim() };
+  };
+  const focusByKey = (key) => {
+    if (!key) return;
+    const cands = main.querySelectorAll('button, a[href], input, select, textarea');
+    for (const el of cands) {
+      const k = focusKey(el);
+      if (k && k.tag === key.tag && k.text === key.text) { el.focus({ preventScroll: true }); return; }
+    }
   };
 
   async function render({ focus = false } = {}) {
@@ -196,6 +223,7 @@ export function createApp({ role, routes, defaultRoute }) {
       if (a.dataset.route === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
     const scroll = focus ? 0 : window.scrollY;
+    const key = focus ? null : focusKey(document.activeElement);
     const frag = document.createElement('div');
     frag.className = 'view';
     let result;
@@ -212,19 +240,28 @@ export function createApp({ role, routes, defaultRoute }) {
       const h1 = main.querySelector('h1');
       if (h1) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
       window.scrollTo(0, 0);
-    } else window.scrollTo(0, scroll);
+    } else { window.scrollTo(0, scroll); focusByKey(key); }
   }
 
   const app = { render, role };
 
-  window.addEventListener('hashchange', () => render({ focus: true }));
+  window.addEventListener('hashchange', () => { if (isRouteHash(window.location.hash)) render({ focus: true }); });
+  const isField = (a) => a && main.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
   onChange((source) => {
-    if (source === 'local') { render(); return; }
-    // Remote change: do not wipe a form the user is typing into.
-    const a = document.activeElement;
-    if (a && main.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) pendingRemote = true; else render();
+    if (source === 'local') { pendingRemote = false; render(); return; }
+    // Remote change: do not wipe a form the user is typing into; apply it later.
+    if (isField(document.activeElement)) pendingRemote = true; else render();
   });
-  main.addEventListener('focusout', () => { if (pendingRemote) { pendingRemote = false; setTimeout(() => render(), 0); } });
+  // Deferred remote render runs after a click or submit has been handled (never in between,
+  // so a click on a button is not swallowed), or when focus leaves the main area.
+  const flushRemote = () => {
+    setTimeout(() => { if (pendingRemote && !isField(document.activeElement)) { pendingRemote = false; render(); } }, 0);
+  };
+  document.addEventListener('click', flushRemote);
+  main.addEventListener('submit', flushRemote);
+  main.addEventListener('focusout', (e) => { if (e.relatedTarget && !main.contains(e.relatedTarget)) flushRemote(); });
+  // Skip link: move focus to main without touching the hash.
+  document.querySelectorAll('.skip').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); main.focus(); }));
 
   // Shell buttons
   document.querySelectorAll('[data-action="logout"]').forEach((b) => b.addEventListener('click', async () => {
