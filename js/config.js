@@ -12,7 +12,9 @@
 //   formEndpoint  : "" (empty)                       -> optional form backend URL.
 //                   Empty = the quote form opens a mailto: draft to quoteEmail.
 //                   Set = the form is POSTed (multipart form data) to this URL.
-//   panelUrl      : "#"                              -> customer panel URL
+//   panelUrl      : "giris.html"                     -> panel entry URL (header "Panel" button and footer
+//                   link). Currently the DEMO login page (client-side demo, no backend);
+//                   set to the real customer panel URL when one exists.
 //   speedTestUrl  : sample URL                       -> speed test page URL
 //
 // Values are injected into pages through data attributes:
@@ -36,6 +38,6 @@ export const CONFIG = {
     { label: 'Instagram', href: 'https://www.instagram.com/ornekfirma' },
   ],
   formEndpoint: '',
-  panelUrl: '#',
+  panelUrl: 'giris.html',
   speedTestUrl: 'https://hiztesti.ornek-alanadi.com',
 };

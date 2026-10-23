@@ -124,6 +124,7 @@ function headerHtml(active) {
     <a class="brand" href="index.html" aria-label="CORENETWORK ana sayfa">${logo()}</a>
     <nav id="site-nav" class="nav" aria-label="Ana menü">
       <ul>${links}</ul>
+      <a class="btn btn-ghost btn-sm nav-cta" href="giris.html" data-cfg-href="panelUrl">Panel</a>
       <a class="btn btn-primary btn-sm nav-cta" href="iletisim.html#teklif">Teklif Alın</a>
     </nav>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menüyü aç"><span></span><span></span><span></span></button>
@@ -158,7 +159,7 @@ function footerHtml() {
         <li><a href="hakkimizda.html">Hakkımızda</a></li>
         <li><a href="sss.html">Sıkça Sorulan Sorular</a></li>
         <li><a href="iletisim.html#teklif">Teklif Alın</a></li>
-        <li><a href="#" data-cfg-href="panelUrl">Müşteri Paneli</a></li>
+        <li><a href="giris.html" data-cfg-href="panelUrl">Müşteri Paneli</a></li>
         <li><a href="https://hiztesti.ornek-alanadi.com" data-cfg-href="speedTestUrl" target="_blank" rel="noopener noreferrer">Hız Testi</a></li>
       </ul>
     </nav>
