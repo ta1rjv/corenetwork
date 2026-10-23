@@ -25,12 +25,17 @@ function readRaw() {
   return memoryRaw;
 }
 
+const LISTS = ['customers', 'services', 'orders', 'invoices', 'tickets', 'announcements', 'racks', 'links', 'alarms', 'revenue6'];
+function validShape(s) {
+  return !!s && s.version === 1 && !!s.seq && !!s.usage && LISTS.every((k) => Array.isArray(s[k]));
+}
+
 function load() {
   const raw = readRaw();
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.version === 1) { state = parsed; return; }
+      if (validShape(parsed)) { state = parsed; return; }
     } catch (e) { /* corrupt: reseed */ }
   }
   state = createSeed();
@@ -190,9 +195,20 @@ export async function setPowerState(serviceId, power) {
   return mutate((s) => { const v = find(s.services, serviceId); if (v.vds) v.vds.power = power; return v; });
 }
 
-export async function createOrder({ customerId, type, title, mrr, note }) {
+// Product profiles applied when an order is approved (same specs as the seed products).
+const PLANS = {
+  'vds-small': { vcpu: 2, ramGb: 4, diskGb: 80 },
+  'vds-medium': { vcpu: 4, ramGb: 8, diskGb: 160 },
+  'vds-large': { vcpu: 8, ramGb: 16, diskGb: 320 },
+  'colo-quarter': { units: 10, powerKw: 1.8 },
+  'colo-half': { units: 21, powerKw: 3.2 },
+  'fiber-500': { downMbps: 500, upMbps: 500 },
+  'radio-100': { downMbps: 100, upMbps: 100 },
+};
+
+export async function createOrder({ customerId, type, title, plan, mrr, note }) {
   return mutate((s) => {
-    const o = { id: nextId('ord'), customerId, type, title, mrr, note: note || '', status: 'pending', createdAt: now() };
+    const o = { id: nextId('ord'), customerId, type, title, plan: plan || '', mrr, note: note || '', status: 'pending', createdAt: now() };
     s.orders.push(o);
     return o;
   });
@@ -204,9 +220,13 @@ export async function approveOrder(id) {
     if (o.status !== 'pending') return o;
     o.status = 'approved';
     const svc = { id: nextId('svc'), customerId: o.customerId, type: o.type, name: o.title, status: 'active', mrr: o.mrr, since: now() };
-    if (o.type === 'vds') svc.vds = { power: 'running', ip: `203.0.113.${100 + s.seq.svc}`, os: 'Ubuntu 22.04 LTS', vcpu: 2, ramGb: 4, diskGb: 80, usage: { cpu: 5, ram: 12, disk: 10 } };
-    if (o.type === 'colo') svc.colo = { rackId: 'R-07', units: 10, powerKw: 1.5 };
-    if (o.type === 'internet') svc.internet = { lineState: 'up', downMbps: 100, upMbps: 100, ip: '198.51.100.120/30', uptimePct: 100, dailyGb: Array(30).fill(0) };
+    const pf = PLANS[o.plan] || {};
+    if (o.type === 'vds') {
+      const host = 1 + ((100 + s.seq.svc - 1) % 254); // stays inside the .1-.254 range of the /24
+      svc.vds = { power: 'running', ip: `203.0.113.${host}`, os: 'Ubuntu 22.04 LTS', vcpu: pf.vcpu || 2, ramGb: pf.ramGb || 4, diskGb: pf.diskGb || 80, usage: { cpu: 5, ram: 12, disk: 10 } };
+    }
+    if (o.type === 'colo') svc.colo = { rackId: 'R-07', units: pf.units || 10, powerKw: pf.powerKw || 1.5 };
+    if (o.type === 'internet') svc.internet = { lineState: 'up', downMbps: pf.downMbps || 100, upMbps: pf.upMbps || 100, ip: '198.51.100.120/30', uptimePct: 100, dailyGb: Array(30).fill(0) };
     s.services.push(svc);
     return o;
   });
@@ -220,7 +240,12 @@ export async function setCustomerStatus(id, status) {
   return mutate((s) => {
     const c = find(s.customers, id);
     c.status = status;
-    s.services.filter((x) => x.customerId === id).forEach((x) => { x.status = status === 'suspended' ? 'suspended' : 'active'; });
+    // Re-activating restores only the services that this suspension suspended.
+    s.services.filter((x) => x.customerId === id).forEach((x) => {
+      if (status === 'suspended') {
+        if (x.status === 'active') { x.status = 'suspended'; x.suspendedByCustomer = true; }
+      } else if (x.suspendedByCustomer) { x.status = 'active'; delete x.suspendedByCustomer; }
+    });
     return c;
   });
 }

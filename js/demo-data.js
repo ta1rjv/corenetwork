@@ -14,7 +14,7 @@
 //                              usage: { cpu, ram, disk } (percent) }
 //                  internet: { lineState: 'up'|'down', downMbps, upMbps, ip, uptimePct,
 //                              dailyGb: [30 numbers] } }
-//   order        { id, customerId, type, title, mrr, note, status:
+//   order        { id, customerId, type, title, plan, mrr, note, status:
 //                  'pending'|'approved'|'rejected', createdAt }
 //   invoice      { id, customerId, no, issuedAt, dueAt, status: 'paid'|'unpaid'|'overdue',
 //                  paidAt|null, items: [ { desc, amount } ], total }
@@ -95,10 +95,10 @@ export function createSeed(now = Date.now()) {
   ];
 
   const orders = [
-    { id: 'ord-1', customerId: 'c2', type: 'vds', title: 'VDS Orta (ek sunucu)', mrr: 1450, note: 'Test ortamı için ek sunucu.', status: 'pending', createdAt: at(1) },
-    { id: 'ord-2', customerId: 'c5', type: 'colo', title: 'Co-location - Ek Çeyrek Raf', mrr: 11200, note: 'Yedekleme sistemi için.', status: 'pending', createdAt: at(2) },
-    { id: 'ord-3', customerId: 'c4', type: 'internet', title: 'Fiber İnternet - Yedek Hat', mrr: 3900, note: '', status: 'pending', createdAt: at(0, 5) },
-    { id: 'ord-4', customerId: 'c3', type: 'internet', title: 'Radyolink - Şube', mrr: 4100, note: '', status: 'approved', createdAt: at(40) },
+    { id: 'ord-1', customerId: 'c2', type: 'vds', plan: 'vds-medium', title: 'VDS Orta (ek sunucu)', mrr: 1450, note: 'Test ortamı için ek sunucu.', status: 'pending', createdAt: at(1) },
+    { id: 'ord-2', customerId: 'c5', type: 'colo', plan: 'colo-quarter', title: 'Co-location - Ek Çeyrek Raf', mrr: 11200, note: 'Yedekleme sistemi için.', status: 'pending', createdAt: at(2) },
+    { id: 'ord-3', customerId: 'c4', type: 'internet', plan: 'fiber-500', title: 'Fiber İnternet - Yedek Hat', mrr: 3900, note: '', status: 'pending', createdAt: at(0, 5) },
+    { id: 'ord-4', customerId: 'c3', type: 'internet', plan: 'radio-100', title: 'Radyolink - Şube', mrr: 4100, note: '', status: 'approved', createdAt: at(40) },
   ];
 
   const inv = (id, customerId, no, issuedDays, dueDays, status, items) => ({
@@ -180,6 +180,6 @@ export function createSeed(now = Date.now()) {
     version: 1,
     seq: { tkt: 5, msg: 8, inv: 9, ord: 4, ann: 2, svc: 9, alm: 3, ct: 2 },
     customers, services, orders, invoices, tickets, announcements, racks, links, alarms, usage,
-    revenue6: [118000, 124500, 131200, 129800, 138400, 0], // last item is replaced by the computed MRR
+    revenue6: [66000, 69500, 72400, 75800, 77900, 0], // last item is replaced by the computed MRR (79,250 in the seed)
   };
 }
