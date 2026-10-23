@@ -22,6 +22,24 @@ document.querySelectorAll('form[data-role]').forEach((form) => {
   if (quick) quick.addEventListener('click', () => enter(form, true));
 });
 
+// Tabs (customer / admin) with arrow-key support.
+const tabs = Array.from(document.querySelectorAll('[data-tab]'));
+function selectTab(tab, focus) {
+  tabs.forEach((t) => {
+    const on = t === tab;
+    t.setAttribute('aria-selected', String(on));
+    t.tabIndex = on ? 0 : -1;
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+  });
+  if (focus) tab.focus();
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => selectTab(t, false));
+  t.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') selectTab(tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length], true);
+  });
+});
+
 // Already signed in: offer a direct link instead of redirecting.
 const role = currentRole();
 if (role) {

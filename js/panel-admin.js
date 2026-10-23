@@ -2,45 +2,49 @@
 // All data comes from the async store interface; nothing here touches localStorage.
 import * as store from './demo-store.js';
 import {
-  h, createApp, pageHead, backLink, card, chartCard, lineChart, barChart, meter, dl, table, badge, sampleTag,
+  h, createApp, pageHead, backLink, card, cardX, chartCard, lineChart, barChart, meter, dl, table, badge, sampleTag, kpiTile, icon, threadView,
   emptyState, field, option, money, num, fmtDate, fmtDateTime, LABELS, toast,
 } from './panel-ui.js';
 
-const kpiBox = (label, value, sub) => h('div', { class: 'kpi' }, h('p', { class: 'kpi-label' }, label), h('div', { class: 'kpi-val' }, value), sub ? h('p', { class: 'kpi-sub' }, sub) : null);
 const months = ['5 ay önce', '', '', '', '', 'bu ay'];
 
 // ------------------------------------------------------------ dashboard ----
 async function dashboard(_a, { main }) {
   const m = await store.getMetrics();
-  const vals = {
-    cust: h('div', { class: 'kpi-val' }), mrr: h('div', { class: 'kpi-val' }), tix: h('div', { class: 'kpi-val' }),
-    rack: h('div', { class: 'kpi-val' }), up: h('div', { class: 'kpi-val' }),
+  const prev = m.revenue6[m.revenue6.length - 2];
+  const growth = ((m.mrr - prev) / prev) * 100;
+  const tiles = {
+    cust: kpiTile({ label: 'Müşteri sayısı', value: String(m.customers), sub: `${m.activeCustomers} aktif`, delta: { text: '+1 geçen aya göre', tone: 'up' }, spark: [4, 4, 5, 5, 5, 6] }),
+    mrr: kpiTile({ label: 'Aylık yinelenen gelir', value: money(m.mrr), delta: { text: `${growth >= 0 ? '+' : ''}${num(growth, 1)}% geçen aya göre`, tone: growth >= 0 ? 'up' : 'down' }, spark: m.revenue6 }),
+    tix: kpiTile({ label: 'Açık destek talebi', value: String(m.openTickets), sub: `${m.pendingOrders} bekleyen sipariş`, href: '#/destek', spark: [3, 5, 4, 6, 5, m.openTickets] }),
+    rack: kpiTile({ label: 'Raf doluluğu', value: `%${m.rackOccupancyPct}`, delta: { text: '+2 puan geçen aya göre', tone: 'flat' }, spark: [48, 49, 51, 52, 53, m.rackOccupancyPct] }),
   };
-  const kpiWith = (label, node, sub) => h('div', { class: 'kpi' }, h('p', { class: 'kpi-label' }, label), node, sub ? h('p', { class: 'kpi-sub' }, sub) : null);
-  const upBox = h('div'), pwBox = h('div'), revBox = h('div'), tixBox = h('div');
-  const live = h('span', { class: 'sample-tag' }, 'Canlı (simülasyon)');
+  const upVal = h('span', { class: 'big-val' }), pwVal = h('span', { class: 'big-val' });
+  const upChart = lineChart([{ name: 'Uplink', values: m.uplinkHistory }], { unit: '%', max: 100, labels: ['~90 sn önce', 'şimdi'], desc: 'Uplink kullanımı yüzdesi, canlı simülasyon' });
+  const pwChart = lineChart([{ name: 'Güç', values: m.powerHistory }], { unit: 'kW', labels: ['~90 sn önce', 'şimdi'], desc: 'Toplam IT gücü, canlı simülasyon' });
+  const tixBox = h('div');
   const paint = (d) => {
-    vals.cust.textContent = String(d.customers);
-    vals.mrr.textContent = money(d.mrr);
-    vals.tix.textContent = String(d.openTickets);
-    vals.rack.textContent = `%${d.rackOccupancyPct}`;
-    vals.up.textContent = `%${num(d.uplinkPct, 1)}`;
-    upBox.replaceChildren(lineChart([{ name: 'Uplink', values: d.uplinkHistory }], { unit: '%', max: 100, labels: ['~90 sn önce', 'şimdi'], desc: 'Uplink kullanımı yüzdesi, canlı simülasyon' }));
-    pwBox.replaceChildren(lineChart([{ name: 'Güç', values: d.powerHistory }], { unit: 'kW', labels: ['~90 sn önce', 'şimdi'], desc: 'Toplam IT gücü, canlı simülasyon' }));
-    revBox.replaceChildren(barChart(d.revenue6.map((v) => Math.round(v / 1000)), months, { unit: 'bin TL', desc: 'Aylık yinelenen gelir, son 6 ay', color: '#3cffb0' }));
+    tiles.cust.update({ value: String(d.customers) });
+    tiles.mrr.update({ value: money(d.mrr) });
+    tiles.tix.update({ value: String(d.openTickets) });
+    tiles.rack.update({ value: `%${d.rackOccupancyPct}` });
+    upVal.textContent = `%${num(d.uplinkPct, 1)}`;
+    pwVal.textContent = `${num(d.powerKw, 1)} kW`;
+    upChart.update([{ name: 'Uplink', values: d.uplinkHistory }]);
+    pwChart.update([{ name: 'Güç', values: d.powerHistory }]);
     const total = d.ticketsByStatus.reduce((a, b) => a + b.count, 0) || 1;
     tixBox.replaceChildren(...d.ticketsByStatus.map((s) => meter((s.count / total) * 100, LABELS.ticket[s.status])));
   };
   paint(m);
-  main.append(pageHead('Gösterge paneli', sampleTag(), live),
-    h('div', { class: 'grid-kpi' },
-      kpiWith('Müşteri sayısı', vals.cust, `${m.activeCustomers} aktif`), kpiWith('Aylık yinelenen gelir', vals.mrr, 'aktif hizmetler'),
-      kpiWith('Açık destek talebi', vals.tix, `${m.pendingOrders} bekleyen sipariş`), kpiWith('Raf doluluğu', vals.rack), kpiWith('Uplink kullanımı', vals.up, 'ilk 3 hat ortalaması')),
+  const note = h('div', { class: 'chart-note' }, sampleTag(), h('span', null, 'Canlı simülasyon, 3 saniyede bir güncellenir'));
+  main.append(pageHead('Gösterge paneli', 'Operasyonun anlık özeti. Tüm değerler örnek veridir.'),
+    h('div', { class: 'grid-kpi' }, tiles.cust, tiles.mrr, tiles.tix, tiles.rack),
     h('div', { class: 'grid-cards' },
-      card('Uplink kullanımı', upBox, h('div', { class: 'chart-note' }, sampleTag())),
-      card('Toplam IT gücü', pwBox, h('div', { class: 'chart-note' }, sampleTag())),
-      card('Aylık yinelenen gelir', revBox, h('div', { class: 'chart-note' }, sampleTag())),
-      card('Destek talepleri (durum dağılımı)', tixBox, h('div', { class: 'chart-note' }, sampleTag()))));
+      cardX('Uplink kullanımı', 'İlk 3 hat ortalaması', upVal, upChart, note),
+      cardX('Toplam IT gücü', 'Tüm raflar', pwVal, pwChart, note.cloneNode(true))),
+    h('div', { class: 'grid-cards' },
+      chartCard('Aylık yinelenen gelir', barChart(m.revenue6.map((v) => Math.round(v / 1000)), months, { unit: 'bin TL', desc: 'Aylık yinelenen gelir, son 6 ay', color: '#19e0ff' }), null, 'Son 6 ay'),
+      cardX('Destek talepleri', 'Durum dağılımı', null, tixBox, h('div', { class: 'chart-note' }, sampleTag()))));
   const timer = setInterval(async () => { if (!document.hidden) paint(await store.getMetrics()); }, 3000);
   return () => clearInterval(timer);
 }
@@ -55,7 +59,7 @@ async function customers(args, { main }) {
     if (!c) { main.append(backLink('#/musteriler', 'Müşteriler'), emptyState('Müşteri bulunamadı.')); return; }
     const suspended = c.status === 'suspended';
     main.append(backLink('#/musteriler', 'Müşteriler'),
-      pageHead(c.name, badge(c.status, LABELS.customer[c.status]),
+      pageHead(c.name, `${c.city} - ${c.plan} plan`, badge(c.status, LABELS.customer[c.status]),
         h('button', { class: suspended ? 'btn btn-primary btn-sm' : 'btn btn-danger btn-sm', type: 'button', onclick: () => store.setCustomerStatus(c.id, suspended ? 'active' : 'suspended') }, suspended ? 'Etkinleştir' : 'Askıya al')),
       h('div', { class: 'grid-cards' },
         card('Bilgiler', dl([['Şehir', c.city], ['Müşteri olma tarihi', fmtDate(c.since)], ['Plan', c.plan], ['Yetkili', c.profile.contactName], ['E-posta', c.profile.email], ['Telefon', c.profile.phone]])),
@@ -81,7 +85,7 @@ async function customers(args, { main }) {
   q.addEventListener('input', draw);
   st.addEventListener('change', draw);
   draw();
-  main.append(pageHead('Müşteriler', sampleTag()), h('div', { class: 'filters' }, field('Ara', q), field('Durum', st)), body);
+  main.append(pageHead('Müşteriler', 'Müşteri hesapları, durumları ve hizmet sayıları.'), h('div', { class: 'filters filters-bar' }, field('Ara', q), field('Durum', st)), body);
 }
 
 // --------------------------------------------------------------- orders ----
@@ -90,13 +94,13 @@ async function orders(_a, { main }) {
   const name = (id) => (custs.find((c) => c.id === id) || { name: id }).name;
   const pending = list.filter((o) => o.status === 'pending');
   const done = list.filter((o) => o.status !== 'pending');
-  main.append(pageHead('Siparişler / Hizmetler', sampleTag()),
-    card('Bekleyen siparişler', pending.length ? table(['Müşteri', 'Hizmet', 'Aylık', 'Tarih', 'Not', ''], pending.map((o) => [
+  main.append(pageHead('Siparişler / Hizmetler', 'Bekleyen siparişleri onaylayın veya reddedin; onaylanan sipariş hizmet olarak oluşturulur.'),
+    card('Bekleyen siparişler', pending.length ? table(['Müşteri', 'Hizmet', '>Aylık', 'Tarih', 'Not', ''], pending.map((o) => [
       name(o.customerId), o.title, money(o.mrr), fmtDate(o.createdAt), o.note || '-',
       h('span', { class: 'row' }, h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: async () => { await store.approveOrder(o.id); toast('Sipariş onaylandı, hizmet oluşturuldu.'); } }, 'Onayla'),
         h('button', { class: 'btn btn-danger btn-sm', type: 'button', onclick: async () => { await store.rejectOrder(o.id); toast('Sipariş reddedildi.'); } }, 'Reddet'))]), 'Bekleyen siparişler') : emptyState('Bekleyen sipariş yok.')),
     card('Geçmiş siparişler', done.length ? table(['Müşteri', 'Hizmet', 'Tarih', 'Durum'], done.map((o) => [name(o.customerId), o.title, fmtDate(o.createdAt), badge(o.status, LABELS.order[o.status])]), 'Geçmiş siparişler') : emptyState('Kayıt yok.')),
-    card(`Tüm hizmetler (${svcs.length})`, table(['Müşteri', 'Hizmet', 'Tür', 'Aylık', 'Durum'], svcs.map((s) => [name(s.customerId), s.name, LABELS.serviceType[s.type], money(s.mrr), badge(s.status, LABELS.service[s.status])]), 'Hizmetler')));
+    card(`Tüm hizmetler (${svcs.length})`, table(['Müşteri', 'Hizmet', 'Tür', '>Aylık', 'Durum'], svcs.map((s) => [name(s.customerId), s.name, LABELS.serviceType[s.type], money(s.mrr), badge(s.status, LABELS.service[s.status])]), 'Hizmetler')));
 }
 
 // ------------------------------------------------------------- invoices ----
@@ -112,7 +116,7 @@ async function invoices(_a, { main }) {
   const draw = () => {
     invStatus = st.value; invCustomer = cu.value;
     const rows = list.filter((i) => (!st.value || i.status === st.value) && (!cu.value || i.customerId === cu.value));
-    body.replaceChildren(rows.length ? table(['Fatura no', 'Müşteri', 'Tarih', 'Son ödeme', 'Tutar', 'Durum', ''], rows.map((i) => [
+    body.replaceChildren(rows.length ? table(['Fatura no', 'Müşteri', 'Tarih', 'Son ödeme', '>Tutar', 'Durum', ''], rows.map((i) => [
       i.no, name(i.customerId), fmtDate(i.issuedAt), fmtDate(i.dueAt), money(i.total), badge(i.status, LABELS.invoice[i.status]),
       i.status !== 'paid' ? h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: async () => { await store.payInvoice(i.id); toast(`${i.no} ödendi olarak işaretlendi.`); } }, 'Ödendi işaretle') : null]), 'Faturalar') : emptyState('Sonuç yok.'));
   };
@@ -134,7 +138,7 @@ async function invoices(_a, { main }) {
     toast('Fatura oluşturuldu.');
   } }, field('Müşteri', fc), field('Açıklama', fd), h('div', { class: 'filters' }, field('Tutar (TL)', fa), field('Son ödeme tarihi', fdue)), err,
     h('div', null, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Fatura oluştur')));
-  main.append(pageHead('Faturalar', sampleTag()), h('div', { class: 'filters' }, field('Durum', st), field('Müşteri', cu)), body, card('Yeni fatura', form));
+  main.append(pageHead('Faturalar', 'Fatura listesi, ödeme durumları ve yeni fatura oluşturma.'), h('div', { class: 'filters filters-bar' }, field('Durum', st), field('Müşteri', cu)), body, card('Yeni fatura', form));
 }
 
 // -------------------------------------------------------------- tickets ----
@@ -150,16 +154,15 @@ async function tickets(args, { main }) {
     const err = h('p', { class: 'err', role: 'alert' });
     const stSel = h('select', { onchange: async (e) => { await store.setTicketStatus(t.id, e.target.value); toast('Durum güncellendi.'); } },
       ['open', 'answered', 'closed'].map((k) => option(k, LABELS.ticket[k], t.status === k)));
-    main.append(backLink('#/destek', 'Destek talepleri'), pageHead(t.subject, badge(t.status, LABELS.ticket[t.status])),
-      h('p', { class: 'sub' }, `${name(t.customerId)} - ${t.dept} - Öncelik: ${LABELS.priority[t.priority]} - ${fmtDateTime(t.createdAt)}`),
-      h('div', { class: 'thread' }, t.messages.map((m) => h('div', { class: `msg from-${m.from}` }, h('span', { class: 'msg-meta' }, `${m.from === 'admin' ? 'Destek ekibi' : name(t.customerId)} - ${fmtDateTime(m.at)}`), m.text))),
-      h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
+    main.append(backLink('#/destek', 'Destek talepleri'), pageHead(t.subject, `${name(t.customerId)} - ${t.dept} - Öncelik: ${LABELS.priority[t.priority]} - ${fmtDateTime(t.createdAt)}`, badge(t.status, LABELS.ticket[t.status])),
+      card('Yazışma', threadView(t.messages, { customer: name(t.customerId), admin: 'Destek ekibi' })),
+      card('Yanıt', h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
         e.preventDefault();
         if (!text.value.trim()) { err.textContent = 'Yanıt boş olamaz.'; return; }
         await store.replyTicket(t.id, 'admin', text.value.trim());
         toast('Yanıt gönderildi.');
       } }, field('Yanıt', text), err, h('div', { class: 'filters' }, h('div', null, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Yanıtla')), field('Durum', stSel),
-        t.status !== 'closed' ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.setTicketStatus(t.id, 'closed') }, 'Talebi kapat') : null)));
+        t.status !== 'closed' ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.setTicketStatus(t.id, 'closed') }, 'Talebi kapat') : null))));
     return;
   }
   const list = await store.listTickets();
@@ -173,7 +176,7 @@ async function tickets(args, { main }) {
   };
   st.addEventListener('change', draw);
   draw();
-  main.append(pageHead('Destek talepleri', sampleTag()), h('div', { class: 'filters' }, field('Durum', st)), body);
+  main.append(pageHead('Destek talepleri', 'Müşteri talepleri; yanıtlayın, durumu güncelleyin veya kapatın.'), h('div', { class: 'filters filters-bar' }, field('Durum', st)), body);
 }
 
 // ---------------------------------------------------------- infrastructure ----
@@ -186,10 +189,11 @@ async function infra(_a, { main }) {
   });
   jitter();
   const open = alarms.filter((a) => !a.acked);
-  main.append(pageHead('Altyapı izleme', sampleTag(), h('span', { class: 'sample-tag' }, 'Canlı (simülasyon)')),
-    h('div', { class: 'rack-grid' }, rackNodes.map(({ r, kw, t }) => card(`Raf ${r.id}`,
+  main.append(pageHead('Altyapı izleme', 'Raf, ağ hattı ve alarm durumu. Değerler canlı simülasyondur (örnek veri).'),
+    h('div', { class: 'rack-grid' }, rackNodes.map(({ r, kw, t }) => h('section', { class: 'rack-card' },
+      h('h3', null, h('span', { class: 'row' }, icon('rack'), `Raf ${r.id}`), badge(r.tempC >= 26 ? 'warning' : 'up', r.tempC >= 26 ? 'Uyarı' : 'Normal')),
       meter((r.usedU / r.totalU) * 100, 'Doluluk'), dl([['Kullanılan', `${r.usedU}/${r.totalU}U`], ['Güç', kw], ['Sıcaklık', t]])))),
-    card('Ağ bağlantıları', table(['Hat', 'Kapasite', 'Kullanım', 'Durum'], links.map((l) => [l.name, `${l.capacityGbps} Gbps`, meter(l.usagePct, 'Kullanım'), badge(l.status, LABELS.link[l.status])]), 'Ağ bağlantıları')),
+    card('Ağ bağlantıları', table(['Hat', '>Kapasite', 'Kullanım', 'Durum'], links.map((l) => [l.name, `${l.capacityGbps} Gbps`, meter(l.usagePct, 'Kullanım'), badge(l.status, LABELS.link[l.status])]), 'Ağ bağlantıları')),
     card(`Alarmlar (${open.length} onaylanmamış)`, alarms.length ? table(['Önem', 'Kaynak', 'Mesaj', 'Zaman', ''], alarms.map((a) => [
       badge(a.severity, LABELS.severity[a.severity]), a.source, a.text, fmtDateTime(a.at),
       a.acked ? badge('closed', 'Onaylandı') : h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.ackAlarm(a.id) }, 'Onayla')]), 'Alarmlar') : emptyState('Alarm yok.')));
@@ -203,7 +207,7 @@ async function announcements(_a, { main }) {
   const title = h('input', { type: 'text', maxlength: 120, required: true });
   const text = h('textarea', { rows: 4, maxlength: 1000, required: true });
   const err = h('p', { class: 'err', role: 'alert' });
-  main.append(pageHead('Duyurular', sampleTag()),
+  main.append(pageHead('Duyurular', 'Yayınladığınız duyurular müşteri panelinde görünür.'),
     card('Yeni duyuru', h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
       e.preventDefault();
       if (!title.value.trim() || !text.value.trim()) { err.textContent = 'Başlık ve metin zorunludur.'; return; }
@@ -215,4 +219,34 @@ async function announcements(_a, { main }) {
       h('button', { class: 'btn btn-danger btn-sm', type: 'button', onclick: () => store.deleteAnnouncement(a.id) }, 'Sil')))) : emptyState('Duyuru yok.')));
 }
 
-createApp({ role: 'admin', defaultRoute: 'gosterge', routes: { gosterge: dashboard, musteriler: customers, siparisler: orders, faturalar: invoices, destek: tickets, altyapi: infra, duyurular: announcements } });
+// ---------------------------------------------------------- integrations ----
+// Placeholder cards only: no integration exists yet (planned, see docs/DECISIONS.md D6).
+async function integrations(_a, { main }) {
+  const item = (ico, title, text) => h('section', { class: 'pcard' },
+    h('div', { class: 'pcard-head' }, h('div', { class: 'row' }, h('span', { class: 'integ-ico' }, icon(ico)), h('h3', { class: 'pcard-h' }, title)), badge('closed', 'Bağlı değil (demo)')),
+    h('p', { class: 'sub' }, text));
+  main.append(pageHead('Entegrasyonlar', 'Dış sistem bağlantıları. Bu demoda hiçbir entegrasyon etkin değildir.'),
+    h('div', { class: 'integ-grid' },
+      item('receipt', 'WHMCS', 'Faturalama, müşteri kayıtları ve destek talebi yönetimi için planlanan entegrasyon.'),
+      item('server', 'Proxmox VE', 'VDS siparişlerinin otomatik kurulumu için planlanan entegrasyon.')));
+}
+
+const shell = {
+  groups: [
+    { cap: 'Genel', items: [{ route: 'gosterge', label: 'Gösterge paneli', icon: 'grid' }] },
+    { cap: 'Müşteri yönetimi', items: [
+      { route: 'musteriler', label: 'Müşteriler', icon: 'users' }, { route: 'siparisler', label: 'Siparişler / Hizmetler', icon: 'inbox' },
+      { route: 'faturalar', label: 'Faturalar', icon: 'receipt' }, { route: 'destek', label: 'Destek talepleri', icon: 'chat' }] },
+    { cap: 'Altyapı', items: [{ route: 'altyapi', label: 'Altyapı izleme', icon: 'pulse' }, { route: 'entegrasyonlar', label: 'Entegrasyonlar', icon: 'plug' }] },
+    { cap: 'İletişim', items: [{ route: 'duyurular', label: 'Duyurular', icon: 'megaphone' }] },
+  ],
+  user: { name: 'Yönetici', email: 'yonetici@demo.local' },
+  // Bell items: unacknowledged alarms and pending orders.
+  notify: async () => {
+    const [alarms, orders] = await Promise.all([store.listAlarms(), store.listOrders({ status: 'pending' })]);
+    return [...alarms.filter((a) => !a.acked).map((a) => ({ text: `Alarm: ${a.source} - ${a.text}`, href: '#/altyapi' })),
+      ...orders.map((o) => ({ text: `Bekleyen sipariş: ${o.title}`, href: '#/siparisler' }))];
+  },
+};
+
+createApp({ role: 'admin', defaultRoute: 'gosterge', shell, routes: { gosterge: dashboard, musteriler: customers, siparisler: orders, faturalar: invoices, destek: tickets, altyapi: infra, entegrasyonlar: integrations, duyurular: announcements } });

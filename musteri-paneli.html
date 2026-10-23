@@ -18,27 +18,8 @@
 </head>
 <body class="panel-body">
   <a class="skip" href="#main">İçeriğe geç</a>
-  <div class="demo-bar" role="note"><span class="demo-badge">DEMO</span><span>Bu bir tanıtım panelidir. Gerçek veri veya sunucu yoktur; tüm değerler örnek veridir ve tarayıcınızda saklanır.</span></div>
-  <div class="app">
-    <div class="side-scrim" id="side-scrim"></div>
-    <aside class="side" id="side" aria-label="Panel menüsü">
-      <a class="brand" href="index.html" aria-label="CORENETWORK ana sayfa"><img src="assets/logo.svg" alt="CORENETWORK" width="162" height="20"></a>
-      <p class="side-role">Müşteri paneli <span class="demo-badge">DEMO</span></p>
-      <nav class="side-nav" aria-label="Panel bölümleri"><ul><li><a href="#/genel" data-route="genel">Genel bakış</a></li><li><a href="#/hizmetler" data-route="hizmetler">Hizmetlerim</a></li><li><a href="#/faturalar" data-route="faturalar">Faturalar</a></li><li><a href="#/destek" data-route="destek">Destek</a></li><li><a href="#/hesap" data-route="hesap">Hesabım</a></li></ul></nav>
-      <div class="side-foot">
-        <button class="btn btn-ghost btn-sm" type="button" data-action="reset">Demo verilerini sıfırla</button>
-        <a class="btn btn-ghost btn-sm" href="index.html">Siteye dön</a>
-      </div>
-    </aside>
-    <div class="app-main">
-      <header class="topbar">
-        <button class="menu-btn" id="side-toggle" type="button" aria-expanded="false" aria-controls="side" aria-label="Menüyü aç veya kapat">&#9776;</button>
-        <span class="demo-badge">DEMO</span>
-        <div class="topbar-user"><span class="who">musteri@demo.local</span><button class="btn btn-ghost btn-sm" type="button" data-action="logout">Çıkış</button></div>
-      </header>
-      <main id="main" tabindex="-1"><noscript><p class="empty">Bu demo panelin çalışması için JavaScript gereklidir.</p></noscript></main>
-    </div>
-  </div>
+  <div class="demo-strip" role="note"><strong>DEMO</strong><span>Gerçek veri veya sunucu yoktur. Tüm değerler örnek veridir ve yalnızca bu tarayıcıda saklanır.</span></div>
+  <div class="app" id="app"><noscript><p class="empty">Bu demo panelin çalışması için JavaScript gereklidir.</p></noscript></div>
   <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
   <script type="module" src="js/panel-customer.js"></script>
 </body>

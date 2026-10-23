@@ -18,38 +18,45 @@
 </head>
 <body class="panel-body">
   <a class="skip" href="#main">İçeriğe geç</a>
-  <div class="demo-bar" role="note"><span class="demo-badge">DEMO</span><span>Bu bir tanıtım panelidir. Gerçek veri veya sunucu yoktur; tüm değerler örnek veridir ve tarayıcınızda saklanır.</span></div>
-  <main id="main" class="login-wrap" tabindex="-1">
-    <a class="brand" href="index.html" aria-label="CORENETWORK ana sayfa"><img src="assets/logo.svg" alt="CORENETWORK" width="203" height="25"></a>
-    <header>
-      <p class="eyebrow">Panel demosu <span class="demo-badge">DEMO</span></p>
-      <h1 class="h2">Demo girişi</h1>
-      <p class="lead">Müşteri veya yönetici panelini örnek verilerle deneyin. Bilgiler aşağıda hazır girilidir; gerçek bir kimlik doğrulama yoktur.</p>
-    </header>
-    <div class="login-cards">
-      <section class="pcard" aria-labelledby="t-customer">
-        <h2 id="t-customer" class="pcard-h">Müşteri</h2>
-        <form class="panel-form" data-role="customer" novalidate>
-          <div class="field"><label for="c-email">E-posta</label><input id="c-email" type="email" name="email" autocomplete="username" value="musteri@demo.local"></div>
-          <div class="field"><label for="c-pass">Şifre</label><input id="c-pass" type="password" name="password" autocomplete="current-password" value="demo"></div>
-          <p class="cred mono">musteri@demo.local / demo</p>
+  <div class="demo-strip" role="note"><strong>DEMO</strong><span>Gerçek veri veya sunucu yoktur. Tüm değerler örnek veridir ve yalnızca bu tarayıcıda saklanır.</span></div>
+  <div class="login-split">
+    <section class="login-brand" aria-label="CORENETWORK">
+      <a class="brand" href="index.html" aria-label="CORENETWORK ana sayfa"><img src="assets/logo.svg" alt="CORENETWORK" width="190" height="23"></a>
+      <div class="login-brand-text">
+        <p class="login-claim">Veri merkezi ve bağlantı hizmetlerinizi tek panelden yönetin.</p>
+        <p class="login-sub">Bu sayfa, panel arayüzünün demo sürümüdür.</p>
+      </div>
+      <a class="back-link" href="index.html">← Siteye dön</a>
+    </section>
+    <main id="main" class="login-main" tabindex="-1">
+      <div class="login-card">
+        <p class="env-chip">Demo</p>
+        <h1 class="login-title">Panele giriş</h1>
+        <p class="view-desc">Demo hesaplarından birini seçin. Bilgiler hazır girilidir.</p>
+        <div class="tabs" role="tablist" aria-label="Hesap türü">
+          <button class="tab" id="tab-customer" type="button" role="tab" aria-selected="true" aria-controls="panel-customer" data-tab="customer">Müşteri</button>
+          <button class="tab" id="tab-admin" type="button" role="tab" aria-selected="false" aria-controls="panel-admin" data-tab="admin" tabindex="-1">Yönetici</button>
+        </div>
+        <form class="login-form" data-role="customer" id="panel-customer" role="tabpanel" aria-labelledby="tab-customer" novalidate>
+          <div class="field"><label for="customer-email">E-posta</label><input id="customer-email" type="email" name="email" autocomplete="username" value="musteri@demo.local"></div>
+          <div class="field"><label for="customer-pass">Şifre</label><input id="customer-pass" type="password" name="password" autocomplete="current-password" value="demo"></div>
           <p class="err" role="alert"></p>
-          <div class="row"><button class="btn btn-primary" type="submit">Giriş yap</button><button class="btn btn-ghost" type="button" data-quick="customer">Demo olarak gir</button></div>
+          <button class="btn btn-primary btn-block" type="submit">Giriş yap</button>
+          <button class="btn btn-ghost btn-block" type="button" data-quick="customer">Demo olarak gir</button>
+          <p class="hint-line">Demo bilgileri: <span class="mono">musteri@demo.local</span> / <span class="mono">demo</span></p>
         </form>
-      </section>
-      <section class="pcard" aria-labelledby="t-admin">
-        <h2 id="t-admin" class="pcard-h">Yönetici</h2>
-        <form class="panel-form" data-role="admin" novalidate>
-          <div class="field"><label for="a-email">E-posta</label><input id="a-email" type="email" name="email" autocomplete="username" value="yonetici@demo.local"></div>
-          <div class="field"><label for="a-pass">Şifre</label><input id="a-pass" type="password" name="password" autocomplete="current-password" value="demo"></div>
-          <p class="cred mono">yonetici@demo.local / demo</p>
+        <form class="login-form" data-role="admin" id="panel-admin" role="tabpanel" aria-labelledby="tab-admin" novalidate hidden>
+          <div class="field"><label for="admin-email">E-posta</label><input id="admin-email" type="email" name="email" autocomplete="username" value="yonetici@demo.local"></div>
+          <div class="field"><label for="admin-pass">Şifre</label><input id="admin-pass" type="password" name="password" autocomplete="current-password" value="demo"></div>
           <p class="err" role="alert"></p>
-          <div class="row"><button class="btn btn-primary" type="submit">Giriş yap</button><button class="btn btn-ghost" type="button" data-quick="admin">Demo olarak gir</button></div>
+          <button class="btn btn-primary btn-block" type="submit">Giriş yap</button>
+          <button class="btn btn-ghost btn-block" type="button" data-quick="admin">Demo olarak gir</button>
+          <p class="hint-line">Demo bilgileri: <span class="mono">yonetici@demo.local</span> / <span class="mono">demo</span></p>
         </form>
-      </section>
-    </div>
-    <p class="login-note">Panellerdeki veriler iki panel arasında paylaşılır: müşteri panelinde açtığınız bir destek talebini yönetici panelinde görebilirsiniz. Veriler yalnızca bu tarayıcının localStorage alanında tutulur. <a href="index.html">Siteye dön</a></p>
-  </main>
+        <p class="login-note">Veriler iki panel arasında paylaşılır ve yalnızca bu tarayıcının localStorage alanında tutulur.</p>
+      </div>
+    </main>
+  </div>
   <script type="module" src="js/panel-login.js"></script>
 </body>
 </html>

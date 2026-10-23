@@ -135,13 +135,14 @@ let live = null;
 function seedLive(s) {
   const base = s.links.slice(0, 3).reduce((a, l) => a + l.usagePct, 0) / 3;
   const power = s.racks.reduce((a, r) => a + r.powerKw, 0);
-  live = { uplink: Array.from({ length: 30 }, () => base), power: Array.from({ length: 30 }, () => power) };
+  live = { uplink: [base], power: [power] };
+  for (let i = 1; i < 30; i++) { walk(live.uplink, 8, 20, 95, false); walk(live.power, 1.6, 10, 60, false); }
 }
-const walk = (arr, step, lo, hi) => {
+function walk(arr, step, lo, hi, keep = true) {
   const v = arr[arr.length - 1] + (Math.random() - 0.5) * step;
   arr.push(Math.round(Math.min(hi, Math.max(lo, v)) * 10) / 10);
-  arr.shift();
-};
+  if (keep) arr.shift();
+}
 
 /** Admin KPIs plus simulated live series. Each call advances the simulation by one step. */
 export async function getMetrics() {

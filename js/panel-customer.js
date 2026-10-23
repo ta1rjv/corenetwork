@@ -2,8 +2,8 @@
 // All data comes from the async store interface; nothing here touches localStorage.
 import * as store from './demo-store.js';
 import {
-  h, createApp, pageHead, backLink, card, chartCard, lineChart, barChart, meter, dl, table, badge, sampleTag,
-  emptyState, field, option, money, num, fmtDate, fmtDateTime, LABELS, toast,
+  h, createApp, pageHead, backLink, card, cardX, chartCard, lineChart, barChart, meter, dl, table, badge, kpiTile, avatar,
+  emptyState, sampleTag, threadView, field, option, money, num, fmtDate, fmtDateTime, LABELS, toast,
 } from './panel-ui.js';
 
 const CID = store.DEMO_CUSTOMER_ID;
@@ -11,15 +11,10 @@ const transient = new Map(); // serviceId -> label while a simulated power actio
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const hours24 = Array.from({ length: 24 }, (_, i) => (i % 6 === 0 ? `${String(i).padStart(2, '0')}:00` : ''));
 
-function kpi(label, value, sub, href) {
-  const body = [h('p', { class: 'kpi-label' }, label), h('div', { class: 'kpi-val' }, value), sub ? h('p', { class: 'kpi-sub' }, sub) : null];
-  return href ? h('a', { class: 'kpi', href, style: 'display:block;color:inherit;text-decoration:none' }, body) : h('div', { class: 'kpi' }, body);
-}
-
 function suspendedNotice(customer) {
   return customer.status === 'suspended'
     ? h('p', { class: 'notice', role: 'alert' }, 'Hesabınız yönetici tarafından askıya alındı (demo). Hizmet işlemleri devre dışıdır.')
-    : null;
+    : document.createDocumentFragment();
 }
 
 // ---------------------------------------------------------------- views ----
@@ -32,13 +27,13 @@ async function overview(_a, { main }) {
   const unpaid = invoices.filter((i) => i.status !== 'paid');
   const owed = unpaid.reduce((s, i) => s + i.total, 0);
   main.append(
-    pageHead(`Genel bakış - ${customer.name}`, sampleTag()),
+    pageHead('Genel bakış', `${customer.name} hesabınızın özeti.`),
     suspendedNotice(customer),
     h('div', { class: 'grid-kpi' },
-      kpi('Aktif hizmet', String(services.filter((s) => s.status === 'active').length), `${services.length} hizmet`, '#/hizmetler'),
-      kpi('Açık destek talebi', String(openTickets.length), null, '#/destek'),
-      kpi('Ödenmemiş fatura', String(unpaid.length), money(owed), '#/faturalar'),
-      kpi('Bekleyen sipariş', String(orders.filter((o) => o.status === 'pending').length), null, '#/hizmetler')),
+      kpiTile({ label: 'Aktif hizmet', value: String(services.filter((s) => s.status === 'active').length), sub: `${services.length} hizmet`, spark: [2, 2, 3, 3, 3, 3], href: '#/hizmetler' }),
+      kpiTile({ label: 'Açık destek talebi', value: String(openTickets.length), delta: { text: 'Son 30 günde 2 talep', tone: 'flat' }, href: '#/destek' }),
+      kpiTile({ label: 'Ödenmemiş fatura', value: String(unpaid.length), sub: `Toplam ${money(owed)}`, href: '#/faturalar' }),
+      kpiTile({ label: 'Bekleyen sipariş', value: String(orders.filter((o) => o.status === 'pending').length), href: '#/hizmetler' })),
     h('div', { class: 'grid-cards' },
       card('Duyurular', anns.length ? h('div', { class: 'list' }, anns.slice(0, 3).map((a) =>
         h('div', { class: 'list-item' }, h('div', null, h('p', null, h('strong', null, a.title)), h('p', { class: 'sub' }, a.text)), h('span', { class: 'sub' }, fmtDate(a.createdAt))))) : emptyState('Duyuru yok.')),
@@ -77,7 +72,7 @@ function vdsDetail(svc, customer) {
       h('div', { class: 'row mt' }, btn('Başlat', 'start', !running), btn('Durdur', 'stop', running), btn('Yeniden başlat', 'restart', running)),
       h('p', { class: 'sub mt' }, 'İşlemler simülasyondur; gerçek sunucu etkilenmez.')),
     card('Bilgiler', dl([['IP adresi', h('span', { class: 'mono' }, v.ip)], ['İşletim sistemi', v.os], ['vCPU', String(v.vcpu)], ['RAM', `${v.ramGb} GB`], ['Disk', `${v.diskGb} GB`]])),
-    card('Kullanım', meter(usage.cpu, 'CPU'), meter(usage.ram, 'RAM'), meter(usage.disk, 'Disk'), h('div', { class: 'chart-note' }, sampleTag())),
+    card('Kullanım', busy ? h('div', { class: 'stack', 'aria-busy': 'true' }, h('div', { class: 'skeleton', style: 'height:14px' }), h('div', { class: 'skeleton', style: 'height:14px' }), h('div', { class: 'skeleton', style: 'height:14px' })) : [meter(usage.cpu, 'CPU'), meter(usage.ram, 'RAM'), meter(usage.disk, 'Disk')], h('div', { class: 'chart-note' }, sampleTag())),
   ];
 }
 
@@ -109,7 +104,7 @@ async function services(args, { main, render }) {
     const svc = await store.getService(args[0]).catch(() => null);
     if (!svc || svc.customerId !== CID) { main.append(backLink('#/hizmetler', 'Hizmetlerim'), emptyState('Hizmet bulunamadı.')); return; }
     const parts = svc.type === 'vds' ? vdsDetail(svc, customer) : svc.type === 'internet' ? internetDetail(svc) : await coloDetail(svc);
-    main.append(backLink('#/hizmetler', 'Hizmetlerim'), pageHead(svc.name, badge(svc.status, LABELS.service[svc.status])), suspendedNotice(customer),
+    main.append(backLink('#/hizmetler', 'Hizmetlerim'), pageHead(svc.name, `${LABELS.serviceType[svc.type]} hizmeti`, badge(svc.status, LABELS.service[svc.status])), suspendedNotice(customer),
       h('div', { class: 'grid-cards' }, parts), h('p', { class: 'sub' }, `Aylık ücret: ${money(svc.mrr)} (örnek)`));
     return;
   }
@@ -124,7 +119,7 @@ async function services(args, { main, render }) {
     await store.createOrder({ customerId: CID, type: typeSel.value, title: titles[typeSel.value], plan: plans[typeSel.value], mrr: mrr[typeSel.value], note: note.value.trim() });
     toast('Sipariş talebiniz iletildi (demo).');
   } }, field('Hizmet türü', typeSel), field('Not (isteğe bağlı)', note), h('div', null, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Talep gönder')));
-  main.append(pageHead('Hizmetlerim', sampleTag()), suspendedNotice(customer),
+  main.append(pageHead('Hizmetlerim', 'Aktif hizmetleriniz ve sipariş talepleriniz.'), suspendedNotice(customer),
     h('div', { class: 'list' }, list.map((s) =>
       h('a', { class: 'list-item', href: `#/hizmetler/${s.id}` },
         h('div', { class: 'row' }, h('span', { class: 'svc-ico', 'aria-hidden': 'true' }, ({ colo: 'CO', vds: 'VDS', internet: 'NET' })[s.type]), h('div', null, h('p', null, h('strong', null, s.name)), h('p', { class: 'sub' }, `${LABELS.serviceType[s.type]} - ${money(s.mrr)}/ay`))),
@@ -136,7 +131,7 @@ async function services(args, { main, render }) {
 
 async function invoices(args, { main, render }) {
   const pay = async (inv, btn) => {
-    btn.disabled = true; btn.textContent = 'Ödeme alınıyor...';
+    btn.disabled = true; btn.replaceChildren(h('span', { class: 'spinner', 'aria-hidden': 'true' }), 'Ödeme alınıyor');
     await delay(900);
     await store.payInvoice(inv.id);
     toast(`${inv.no} ödendi (simülasyon).`);
@@ -145,15 +140,15 @@ async function invoices(args, { main, render }) {
     const inv = await store.getInvoice(args[0]).catch(() => null);
     if (!inv || inv.customerId !== CID) { main.append(backLink('#/faturalar', 'Faturalar'), emptyState('Fatura bulunamadı.')); return; }
     const payBtn = inv.status !== 'paid' ? h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: (e) => pay(inv, e.currentTarget) }, 'Öde') : null;
-    main.append(backLink('#/faturalar', 'Faturalar'), pageHead(`Fatura ${inv.no}`, badge(inv.status, LABELS.invoice[inv.status]), payBtn),
+    main.append(backLink('#/faturalar', 'Faturalar'), pageHead(`Fatura ${inv.no}`, `Düzenleme: ${fmtDate(inv.issuedAt)}`, badge(inv.status, LABELS.invoice[inv.status]), payBtn),
       card('Detay', dl([['Düzenleme tarihi', fmtDate(inv.issuedAt)], ['Son ödeme tarihi', fmtDate(inv.dueAt)], ['Ödeme tarihi', fmtDate(inv.paidAt)]]),
         table(['Kalem', 'Tutar'], inv.items.map((i) => [i.desc, money(i.amount)]).concat([[h('strong', null, 'Toplam'), h('strong', null, money(inv.total))]]), 'Fatura kalemleri'),
         h('div', { class: 'chart-note mt' }, sampleTag())));
     return;
   }
   const list = await store.listInvoices({ customerId: CID });
-  main.append(pageHead('Faturalar', sampleTag()),
-    list.length ? table(['Fatura no', 'Tarih', 'Son ödeme', 'Tutar', 'Durum', ''], list.map((i) => [
+  main.append(pageHead('Faturalar', 'Fatura geçmişiniz ve ödeme durumları.'),
+    list.length ? table(['Fatura no', 'Tarih', 'Son ödeme', '>Tutar', 'Durum', ''], list.map((i) => [
       h('a', { href: `#/faturalar/${i.id}` }, i.no), fmtDate(i.issuedAt), fmtDate(i.dueAt), money(i.total), badge(i.status, LABELS.invoice[i.status]),
       h('span', { class: 'row' }, h('a', { class: 'btn btn-ghost btn-sm', href: `#/faturalar/${i.id}` }, 'Detay'),
         i.status !== 'paid' ? h('button', { class: 'btn btn-primary btn-sm', type: 'button', onclick: (e) => pay(i, e.currentTarget) }, 'Öde') : null)]), 'Faturalar') : emptyState('Fatura yok.'));
@@ -167,7 +162,7 @@ async function support(args, { main }) {
     const prio = h('select', null, option('low', 'Düşük'), option('normal', 'Normal', true), option('high', 'Yüksek'));
     const msg = h('textarea', { rows: 5, maxlength: 2000, required: true });
     const err = h('p', { class: 'err', role: 'alert' });
-    main.append(backLink('#/destek', 'Destek talepleri'), pageHead('Yeni destek talebi'),
+    main.append(backLink('#/destek', 'Destek talepleri'), pageHead('Yeni destek talebi', 'Konunuzu ve ayrıntıları paylaşın; ekibimiz en kısa sürede yanıtlar.'),
       h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
         e.preventDefault();
         if (!subject.value.trim() || !msg.value.trim()) { err.textContent = 'Konu ve mesaj zorunludur.'; return; }
@@ -183,24 +178,24 @@ async function support(args, { main }) {
     if (!t || !mine(t)) { main.append(backLink('#/destek', 'Destek talepleri'), emptyState('Talep bulunamadı.')); return; }
     const text = h('textarea', { rows: 4, maxlength: 2000 });
     const err = h('p', { class: 'err', role: 'alert' });
-    main.append(backLink('#/destek', 'Destek talepleri'), pageHead(t.subject, badge(t.status, LABELS.ticket[t.status])),
-      h('p', { class: 'sub' }, `${t.dept} - Öncelik: ${LABELS.priority[t.priority]} - ${fmtDateTime(t.createdAt)}`),
-      h('div', { class: 'thread' }, t.messages.map((m) => h('div', { class: `msg from-${m.from}` },
-        h('span', { class: 'msg-meta' }, `${m.from === 'admin' ? 'CORENETWORK destek' : 'Siz'} - ${fmtDateTime(m.at)}`), m.text))),
-      t.status === 'closed'
-        ? h('div', { class: 'stack' }, h('p', { class: 'notice info' }, 'Bu talep kapatıldı. Yanıt yazmak için talebi yeniden açın.'), h('div', null, h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.setTicketStatus(t.id, 'open') }, 'Talebi yeniden aç')))
-        : h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
-        e.preventDefault();
-        if (!text.value.trim()) { err.textContent = 'Mesaj boş olamaz.'; return; }
-        await store.replyTicket(t.id, 'customer', text.value.trim());
-        toast('Yanıtınız gönderildi.');
-      } }, field('Yanıtınız', text), err,
-      h('div', { class: 'row' }, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Yanıtla'),
-        t.status !== 'closed' ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => { if (window.confirm('Bu destek talebini kapatmak istiyor musunuz?')) store.setTicketStatus(t.id, 'closed'); } }, 'Talebi kapat') : null)));
+    main.append(backLink('#/destek', 'Destek talepleri'),
+      pageHead(t.subject, `${t.dept} - Öncelik: ${LABELS.priority[t.priority]} - ${fmtDateTime(t.createdAt)}`, badge(t.status, LABELS.ticket[t.status])),
+      card('Yazışma', threadView(t.messages, { customer: 'Siz', admin: 'CORENETWORK Destek' }),
+        h('div', { class: 'composer mt' }, t.status === 'closed'
+          ? h('div', { class: 'stack' }, h('p', { class: 'notice info' }, 'Bu talep kapatıldı. Yanıt yazmak için talebi yeniden açın.'),
+            h('div', null, h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => store.setTicketStatus(t.id, 'open') }, 'Talebi yeniden aç')))
+          : h('form', { class: 'panel-form', novalidate: true, onsubmit: async (e) => {
+            e.preventDefault();
+            if (!text.value.trim()) { err.textContent = 'Mesaj boş olamaz.'; return; }
+            await store.replyTicket(t.id, 'customer', text.value.trim());
+            toast('Yanıtınız gönderildi.');
+          } }, field('Yanıtınız', text), err,
+          h('div', { class: 'row' }, h('button', { class: 'btn btn-primary btn-sm', type: 'submit' }, 'Yanıtla'),
+            h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => { if (window.confirm('Bu destek talebini kapatmak istiyor musunuz?')) store.setTicketStatus(t.id, 'closed'); } }, 'Talebi kapat'))))));
     return;
   }
   const list = await store.listTickets({ customerId: CID });
-  main.append(pageHead('Destek', h('a', { class: 'btn btn-primary btn-sm', href: '#/destek/yeni' }, 'Yeni talep')),
+  main.append(pageHead('Destek', 'Destek taleplerinizi oluşturun ve takip edin.', h('a', { class: 'btn btn-primary btn-sm', href: '#/destek/yeni' }, 'Yeni talep')),
     list.length ? table(['Konu', 'Departman', 'Öncelik', 'Durum', 'Güncelleme'], list.map((t) => [
       h('a', { href: `#/destek/${t.id}` }, t.subject), t.dept, LABELS.priority[t.priority], badge(t.status, LABELS.ticket[t.status]), fmtDateTime(t.updatedAt)]), 'Destek talepleri') : emptyState('Destek talebiniz yok.'));
 }
@@ -223,7 +218,7 @@ async function account(_a, { main }) {
   const cr = h('input', { type: 'text', maxlength: 60 });
   const ce = h('input', { type: 'email', maxlength: 120 });
   const cerr = h('p', { class: 'err', role: 'alert' });
-  main.append(pageHead('Hesabım', sampleTag()),
+  main.append(pageHead('Hesabım', 'Profil bilgileriniz, şifre ve iletişim kişileri.'),
     h('div', { class: 'grid-cards' },
       card('Profil', h('form', { class: 'panel-form', onsubmit: async (e) => {
         e.preventDefault();
@@ -253,4 +248,20 @@ async function account(_a, { main }) {
         h('div', null, h('button', { class: 'btn btn-ghost btn-sm', type: 'submit' }, 'Kişi ekle')))));
 }
 
-createApp({ role: 'customer', defaultRoute: 'genel', routes: { genel: overview, hizmetler: services, faturalar: invoices, destek: support, hesap: account } });
+const shell = {
+  groups: [
+    { cap: 'Genel', items: [{ route: 'genel', label: 'Genel bakış', icon: 'grid' }] },
+    { cap: 'Hizmetler ve ödemeler', items: [{ route: 'hizmetler', label: 'Hizmetlerim', icon: 'server' }, { route: 'faturalar', label: 'Faturalar', icon: 'receipt' }] },
+    { cap: 'Destek', items: [{ route: 'destek', label: 'Destek', icon: 'chat' }] },
+    { cap: 'Hesap', items: [{ route: 'hesap', label: 'Hesabım', icon: 'user' }] },
+  ],
+  user: { name: 'Ayşe Demir', email: 'musteri@demo.local' },
+  // Bell items: latest announcements and answered tickets.
+  notify: async () => {
+    const [anns, tix] = await Promise.all([store.listAnnouncements(), store.listTickets({ customerId: CID })]);
+    return [...tix.filter((t) => t.status === 'answered').map((t) => ({ text: `Yanıtlandı: ${t.subject}`, href: `#/destek/${t.id}` })),
+      ...anns.slice(0, 2).map((a) => ({ text: a.title, href: '#/genel' }))];
+  },
+};
+
+createApp({ role: 'customer', defaultRoute: 'genel', shell, routes: { genel: overview, hizmetler: services, faturalar: invoices, destek: support, hesap: account } });
